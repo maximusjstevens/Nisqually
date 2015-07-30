@@ -1,8 +1,13 @@
 clear all; 
 close all;
-
-load NisqProfTrun2.mat
+tic
+% load NisqProfTrun2.mat
 %prof=NisqProfTrun;
+prof=csvread('/Users/maxstev/Documents/MATLAB/Nisqually/FlowLineModel/finite_diff/Profile_Nisq_140603_3.csv'); %profile derived 6/3/14 from D. Shean's tiff based on Driedger and Kennard
+bed=prof(1:end-1,2);
+% bed=flipud(bed); % want the highest point to correspond to 0 x-space
+len=prof(1:end-1,1);
+% len=flipud(len);
 %% --------------------------------
 %define parameters and constants
 %----------------------------------
@@ -24,7 +29,10 @@ fs = 5.7e-20*s_per_year;                % sliding parameter fromOerlemans; (Pa^-
 % nxs = round(xmx/delx) + 1;  % number of grid points
 % x = 0:delx:xmx;% x array (each point)
 
-x=prof(:,1);
+x=linspace(0,max(len),200);
+bed_int=interp1(len,bed,x,'linear');
+
+% x=prof(:,1);
 nxs=length(x);
 delx=x(2)-x(1);
 xmx=max(x);
@@ -40,7 +48,9 @@ nyrs = tf-ts;       % just final time - start time
 %-----------------
 
 % climate foricing for steady state
-b = 7-(10/6000)*x;      % mass balance in /yr     MAX: ARE THESE ARBITRARY UNITS? 
+b = 22-(40/5000)*x;      % mass balance in /yr     MAX: ARE THESE ARBITRARY UNITS? 
+ind=find(b<=0, 1 );
+ELA_bed=bed_int(ind) %this really should include the thickness of the ice also.
 
 %% ---------------------------------
 % glacier bed geometries
@@ -48,7 +58,8 @@ b = 7-(10/6000)*x;      % mass balance in /yr     MAX: ARE THESE ARBITRARY UNITS
 % del = 4e3/log(3);
 % zb =  4392.*exp(-x/del);     % bed profile in m  
 %zb = (-0.1*x+1000);  
-zb=prof(:,2);
+% zb=prof(:,2);
+zb=bed_int;
 %% -----------------------
 % initialize arrays
 %------------------------
@@ -163,7 +174,7 @@ t_out = zeros(length(nouts));           % for counting
    % for a negative ice thickness.
    
    H = max(0 , (H + (dHdt*delt)));
-    
+   
  end  % done with each time step
  
  Hinit = H;
@@ -186,6 +197,6 @@ figure;
 plot(x,H + zb,'c*'); hold on; plot(x,zb,'k','linewidth',1)
 title('Profile')
 
-
+toc
 
 

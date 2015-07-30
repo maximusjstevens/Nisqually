@@ -22,9 +22,9 @@ load space.mat
 % nxs = round(xmx/delx) + 1;  % number of grid points
 % x = 0:delx:xmx;                   % x array (each point)
 
-delt = 0.002; % time step in yrs 
+delt = 0.003; % time step in yrs 
 ts = 0;             % starting time in yrs
-tf = 200;      % final time in yrs
+tf = 500;      % final time in yrs
 nts=floor((tf-ts)/delt) +1; % number of time steps ('round' used because need nts as integer)
 nyrs = tf-ts;       % just final time - start time
 
@@ -33,7 +33,7 @@ nyrs = tf-ts;       % just final time - start time
 %-----------------
 
 % climate foricing for steady state
-b = 7 -(20/6000)*x;      % mass balance in /yr
+b = 22 - (40/5000)*x;      % mass balance in /yr
 
 % climate forcing--for non steady state
 mu = 0.65;      % melt rate in m /yr /degC
@@ -177,7 +177,10 @@ iter=1;
    % for a negative ice thickness.
    
    H = max(0 , (H + (dHdt*delt)));
-
+   
+   ind=find(b<=0, 1 );
+   E_surf=H+zb;
+   ELA=E_surf(ind);
    
 %% ----------------------------
 % plot glacier every so often
@@ -197,11 +200,13 @@ iter=1;
             x1 = [x(1:edgeT) fliplr(x(1:edgeT))]; z1 = [zb(1:edgeT) fliplr(zb(1:edgeT)+H(1:edgeT))];
             patch(x1/1000,z1/1000,'c')
             %plot(x1/1000,z1/1000,'g');
-            axis([0 xmx/1000 min(zb)/1000-.1 max(zb)/1000+1]);
+%             axis([0 xmx/1000 min(zb)/1000-.1 max(zb)/1000+1]);
+            xlim([0 8]);
             xlabel('Distance (km)','fontsize',14); ylabel('Elevation (km)','fontsize',14)
          
-            h3 = text('position',[0.77, 0.92],'string',time,'units','normalized','fontsize',16);
-      
+            h3 = text('position',[0.7, 0.92],'string',time,'units','normalized','fontsize',16);
+            h4 = text('position',[0.7, 0.7],'string',sprintf('ELA = %4.0f m',ELA),'units','normalized','fontsize',16);
+            
             grid on
             hold off    
         
@@ -215,6 +220,10 @@ iter=1;
          
         figure(23);hold off;
         plot(x,H,'c*');
+        
+        figure(24);hold off;
+        plot(x,E_surf,'k.')
+        
         end  % done with fancy plotting
    
  end  % done with each time step
