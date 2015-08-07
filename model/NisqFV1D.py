@@ -64,8 +64,14 @@ def solver(a_U,a_D,a_P,b): #routine to solve Ax=b
     H_t=splin.spsolve(big_A,rhs)    
     return H_t
     
+def gamma_phi(phi,phi_ref,gamma_ref,gamma_grad):
+    Gamma_phi = ( gamma_ref * phi_ref ) / phi
+    return Gamma_phi
+    
 def glacier():
     
+    conv_test = 0.01
+    max_iter = 20
     
     length = 10000.0 # m
     z_res=10.0 #resolution of grid, m
@@ -75,7 +81,7 @@ def glacier():
     time_yr_s=time_yr*sPerYear    
     yrs=np.around(time_yr[-1]-time_yr[0])
     time_total=yrs*sPerYear #total model run time in seconds
-    stpsperyear=2.0 #If this is for transient this number must (for now) be the same time steps as the input density/depth files. Make sure that it is a float.
+    stpsperyear=1.0 #If this is for transient this number must (for now) be the same time steps as the input density/depth files. Make sure that it is a float.
     t_steps=np.int(yrs*stpsperyear)
     dt=time_total/t_steps #time step size. 
     model_time=np.arange(np.around(time_yr[0]*sPerYear),np.around(time_yr[-1]*sPerYear),dt) #set model time steps
@@ -98,13 +104,13 @@ def glacier():
     bc_type = 1
     bc_d   = np.concatenate(([ bc_d_0 ], [ bc_type ]))
     
-    H_0 = 50.*np.ones(len(z_nodes)) 
+    H_0 = 1.*np.ones(len(z_nodes)) 
 #     H_0[:]=bc_u_0   
     
     fd=1.9e-24
     fs=5.7e-20
     B = (22.0-(40.0/5000)*z_nodes)/sPerYear/(t_steps/yrs) #mass balance
-              
+    print "B=",B[0]          
     #B = 0.                                                         
     for i_time in range(0,nt): 
 
@@ -138,11 +144,12 @@ def glacier():
             print "hgrad=",hgrad
             print "Hgrad=",Hgrad
         
-        diffu = -1*(rho_i*g)**3 * H_t**3 * (hgrad)**2 * (fd*H_t**2+fs)
+        diffu = (rho_i*g)**3 * H_t**3 * (hgrad)**2 * (fd*H_t**2+fs)
+        #diffu = -1 * (rho_i*g)**3 * 100**3 * (bedgrad)**2 * (fd*100**2+fs)
         H[i_time,:] = H_t
         
         
-        diffu_P=diffu*1.
+        diffu_P=diffu
         diffu_hold[i_time,:]=diffu_P
         dZ = np.concatenate(([1],np.diff(z_edges),[1]))
         
@@ -164,7 +171,9 @@ def glacier():
         diffu_d =  1/ ( (1 - f_d)/diffu_P + f_d/diffu_D )
         
     
-        S_C_0 = B*sPerYear/stpsperyear # + (-diffu_d+diffu_u)*np.gradient(bed,dz)
+        S_C_0 =  - B*dt + (-diffu_d+diffu_u)*np.gradient(bed,dz) #-1*B?
+        xx=(-diffu_d+diffu_u)*np.gradient(bed,dz)
+        print -B[0]*dt,xx[0]
     
         S_C=S_C_0 
         
@@ -193,14 +202,14 @@ def glacier():
 #         a_U = D_u * A( P_u ) + F_upwind(  F_u )
 #         a_D = D_d * A( P_d ) + F_upwind( -F_d )
 
-        a_U =  D_u # *-1 if using dH/dt = -d/dx(D dH/dx)
-        a_D =  D_d
+        a_U = - D_u # *-1 if using dH/dt = -d/dx(D dH/dx)
+        a_D = - D_d
     
         a_P_0 = dZ/dt
                                 
-        a_P = a_P_0 + a_U + a_D - S_P*dZ
+        a_P = a_P_0 + a_U + a_D + S_P*dZ
                    
-        b = b_0 + a_P_0*H_t       
+        b = b_0 + a_P_0*H_t #+ a_U*-1*bedgrad + a_D*bedgrad      
         
         #Upper boundary
         a_P[0] = 1 
@@ -215,6 +224,7 @@ def glacier():
         a_U[-1] = 0
         #b[-1]=dZ_d[-1]*bc_d[0]
         b[-1]=bc_d[0]
+        
 
         H_t = solver(a_U,a_D,a_P,b)
         

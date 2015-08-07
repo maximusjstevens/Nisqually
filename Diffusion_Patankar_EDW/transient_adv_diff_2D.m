@@ -84,8 +84,8 @@
    nx_P  = nx_fv + 2;        %  number of nodes in x
 %
 %
-   Lz    = 10;               %  z-extent of domain
-   nz_fv = 10;                %  number of finite volumes in z
+   Lz    = 1;               %  z-extent of domain
+   nz_fv = 1;                %  number of finite volumes in z
    nz_P  = nz_fv + 2;        %  number of nodes in z
 %
 %
@@ -134,24 +134,24 @@
 %  ---------------------------------------------------
 %
 %  phi_e at east boundary
-     bc_e_0 = 40;
-     bc_type   = 1;
+     bc_e_0 = 0;
+     bc_type   = 2;
      bc_e = repmat( [ bc_e_0  bc_type ], nz_P, 1 );
 %
 %%  phi_w at west boundary
-     bc_w_0 = 20;
-     bc_type   = 1;
+     bc_w_0 = 1;
+     bc_type   = 0;
      bc_w = repmat( [ bc_w_0  bc_type ], nz_P, 1 );
 %
 %
 %%  phi gradient on upper boundary
-     bc_u_0 = 2;
+     bc_u_0 = 0;
      bc_type = 2;
      bc_u   = repmat( [ bc_u_0  bc_type ]', 1, nx_P );
 %
 %
 %%  phi gradient on lower boundary
-     bc_d_0 = 5;
+     bc_d_0 = 0;
      bc_type = 2;
      bc_d   = repmat( [ bc_d_0  bc_type ]', 1, nx_P );
 %
@@ -171,7 +171,7 @@
 %%  material parameters
 %%%%%%%%%%%%%%%%%%%%%%%
 % set up thermal-property matrix - uniform conductivity
-     Gamma_0 = 1;                     %   W m^-1 deg^-1    
+     Gamma_0 = -1e6;                     %   W m^-1 deg^-1    
      Gamma_P = repmat( Gamma_0, nz_P, nx_P );
 %
 %
